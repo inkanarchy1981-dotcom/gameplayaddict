@@ -1,0 +1,10 @@
+---
+deployment:
+  tasks:
+    - >-
+      /bin/bash -lc 'set -euo pipefail;
+      export PATH="/usr/local/cpanel/3rdparty/bin:/usr/local/bin:/usr/bin:/bin:$PATH";
+      export GIT_TERMINAL_PROMPT=0;
+      cd /home/gamehink/gameplayaddict-source;
+      revision="$(git rev-parse --verify HEAD)";
+      exec /bin/bash scripts/deploy-namecheap.sh deploy "$revision"'

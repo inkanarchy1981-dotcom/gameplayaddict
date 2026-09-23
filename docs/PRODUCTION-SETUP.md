@@ -1,5 +1,49 @@
 # GitHub to Namecheap: exact connection runbook
 
+## cPanel Git Version Control: Deploy HEAD Commit
+
+The repository-root `.cpanel.yml` calls the existing `scripts/deploy-namecheap.sh`
+in **deploy** mode, which prepares, verifies and activates a release. It uses the
+checked-out **HEAD** in `/home/gamehink/gameplayaddict-source`, not a newer commit
+that might appear on origin/main during deployment. There is no second copy/upload
+deployment system and no credentials in the YAML.
+
+For the already-cloned repository:
+
+1. Push the commit containing `.cpanel.yml` to GitHub `main` first. A local commit
+   alone is not available to cPanel. From your authenticated local checkout, run
+   `git push origin main`.
+2. In cPanel > Git Version Control > Manage `gameplayaddict-source` > Pull or
+   Deploy, click **Update from Remote**. Confirm the displayed HEAD includes the
+   new `.cpanel.yml` commit and the checkout has no uncommitted changes.
+3. Before the first activation, confirm the existing Node app is running with
+   startup **server.cjs**, production mode and the Node 22 environment from section
+   3. Preserve the placeholder startup as described in section 4 so the first
+   activation has a rollback file. The YAML does not change cPanel's app settings.
+4. Click **Deploy HEAD Commit** when ready to activate production. This is the
+   deployment action; **Update from Remote** only updates the source checkout.
+
+The task uses a Bash login shell with cPanel's Git executable directory on PATH.
+The existing script activates the Node environment, locks deployment, fetches main
+noninteractively, checks HEAD is reachable from origin/main, installs dependencies
+in an isolated release, and runs the existing verification/build/tests. Fetching
+still requires the clone's saved, noninteractive GitHub access to work.
+
+Only after verification passes does it back up app-root `server.cjs`, switch
+`/home/gamehink/gameplayaddict/current`, install the existing Passenger launcher,
+touch `tmp/restart.txt`, and verify the public health endpoint reports that HEAD.
+Preparation may create `tmp/` but does not replace live application code. Failed
+preparation stops before activation; a health-check failure uses the existing
+rollback handler to restore the previous release/startup where available. Prior
+releases, backups, .htaccess and the original placeholder file are retained.
+
+Do not click Deploy while a GitHub Actions deployment is running; the existing
+deployment lock rejects overlapping runs. For initial prepare-only diagnostics,
+the section 3 terminal command remains available. No deployment is performed by
+adding or locally validating this file.
+
+This follows [cPanel's documented pull deployment sequence](https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-set-up-deployment/).
+
 ## 1. Create and push the canonical repository
 
 Create a private GitHub repository named `gameplayaddict`. Leave README, license and .gitignore unchecked (this project supplies them). Replace `YOUR_GITHUB_OWNER` below with your actual user or organization. In Windows PowerShell:
