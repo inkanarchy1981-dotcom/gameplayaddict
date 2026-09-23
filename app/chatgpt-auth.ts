@@ -17,6 +17,8 @@ const SIGN_OUT_PATH = "/signout-with-chatgpt";
 const CALLBACK_PATH = "/callback";
 
 export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
+  // Only a trusted Sites proxy may supply these identity headers.
+  if (process.env.SITES_TRUST_AUTH_HEADERS !== "1") return null;
   const requestHeaders = await headers();
   const email = requestHeaders.get(USER_EMAIL_HEADER);
   if (!email) return null;

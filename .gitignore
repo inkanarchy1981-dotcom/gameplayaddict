@@ -40,3 +40,13 @@ next-env.d.ts
 /.sites-runtime/
 /outputs/
 /work/
+
+*.tsbuildinfo
+/tmp/
+/releases/
+*.key
+*.p12
+!.env.example
+.release-revision
+.verified
+id_ed25519*

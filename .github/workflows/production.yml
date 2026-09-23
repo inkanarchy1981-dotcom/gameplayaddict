@@ -1,0 +1,60 @@
+name: Production
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy this verified main revision to Namecheap
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --include=dev
+      - run: npm ls --omit=dev --depth=0
+      - run: npm run verify
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - run: bash -n scripts/deploy-namecheap.sh scripts/rollback-namecheap.sh
+      - run: shellcheck scripts/deploy-namecheap.sh scripts/rollback-namecheap.sh
+  deploy:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && ((github.event_name == 'push' && vars.NAMECHEAP_AUTO_DEPLOY == 'true') || (github.event_name == 'workflow_dispatch' && inputs.deploy))
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SSH credentials
+        env:
+          SSH_KEY: ${{ secrets.NAMECHEAP_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.NAMECHEAP_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+      - name: Build isolated release and activate through Passenger
+        env:
+          SSH_HOST: ${{ vars.NAMECHEAP_HOST }}
+          SSH_PORT: ${{ vars.NAMECHEAP_PORT }}
+          REVISION: ${{ github.sha }}
+        run: |
+          test -n "$SSH_HOST"
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=20 \
+            -p "${SSH_PORT:-21098}" "gamehink@$SSH_HOST" \
+            "bash -s -- deploy $REVISION" < scripts/deploy-namecheap.sh

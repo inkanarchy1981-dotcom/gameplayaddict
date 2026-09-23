@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   title: { default: siteConfig.defaultMetadata.title, template: `%s | ${siteConfig.brandName}` },
   description: siteConfig.defaultMetadata.description,
   applicationName: siteConfig.brandName,
-  other: { "codex-preview": "development" },
   alternates: { canonical: "/" },
   openGraph: { title: siteConfig.defaultMetadata.title, description: siteConfig.defaultMetadata.description, type: siteConfig.openGraph.type, locale: siteConfig.openGraph.locale, siteName: siteConfig.openGraph.siteName, images: [{ url: "/og.png", width: 1200, height: 630, alt: "GameplayAddict — Play Leonida Smarter" }] },
   twitter: { card: "summary_large_image", title: siteConfig.defaultMetadata.title, description: siteConfig.defaultMetadata.description, images: ["/og.png"] },

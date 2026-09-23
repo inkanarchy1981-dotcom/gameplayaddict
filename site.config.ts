@@ -1,7 +1,7 @@
 export const siteConfig = {
   brandName: "GameplayAddict",
   brandDisplay: "GAMEPLAY//ADDICT",
-  domain: "https://gameplayaddict-gta6.ink-a.chatgpt.site",
+  domain: "https://gameplayaddict.com",
   tagline: "Play Leonida smarter.",
   description:
     "Verified GTA VI intelligence, a source-aware map, Crew guidance, and grounded buying tools for launch day and beyond.",
