@@ -1,0 +1,30 @@
+GameplayAddict — Namecheap cPanel deployment package
+
+Prepared from the existing GameplayAddict production source package 9b99e89.
+Site content, design, routes, editorial data, and public assets were not changed.
+Only deployment configuration was adapted for Namecheap/cPanel Passenger.
+The Namecheap build uses standard Next.js (already included in the project) rather than the OpenAI Sites/Vinext runtime.
+
+KNOWN TARGET
+- Domain: gameplayaddict.com
+- cPanel app root: /home/gamehink/gameplayaddict
+- Node.js: 22.23.2 (project requires >=22.13.0)
+- Mode: Production
+- Startup file: server.cjs
+
+DEPLOY
+1. Stop the GameplayAddict Node.js app in Setup Node.js App.
+2. Upload this ZIP into /home/gamehink/gameplayaddict and extract it there. The ZIP is intentionally flat at its root so folders such as app/, components/, lib/, public/, and scripts/ land in the correct place. Choose overwrite/replace when cPanel asks about existing project files.
+3. In Setup Node.js App, click Run NPM Install. This package uses postinstall to run `next build` automatically.
+4. Make sure Application startup file is `server.cjs`. Start/Restart the app.
+5. Open https://gameplayaddict.com directly in the browser.
+
+IF POSTINSTALL IS SKIPPED
+- Run JS Script -> build:namecheap
+- Then Restart the app.
+
+DO NOT USE ON NAMECHEAP
+- install:ci
+- build:sites
+- start:sites
+Those are preserved only for the original OpenAI Sites/Vinext environment.
