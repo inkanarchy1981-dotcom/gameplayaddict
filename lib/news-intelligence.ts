@@ -5,7 +5,7 @@ export type NewsSourceType = "official" | "reporting" | "community";
 export type NewsDecision =
   | "UPDATE_EXISTING" | "STRENGTHEN_SOURCE" | "CORRECT_STALE"
   | "ADD_MEDIA_RELATIONSHIP" | "ADD_INTERNAL_LINK" | "FLAG_OPPORTUNITY"
-  | "PUBLISH_STANDALONE" | "NO_MEANINGFUL_CHANGE" | "HOLD_UNCONFIRMED";
+  | "PUBLISH_STANDALONE" | "NO_MEANINGFUL_CHANGE" | "HOLD_UNCONFIRMED" | "HOLD_EDITORIAL";
 
 export type NewsSource = Pick<Source, "id" | "title" | "publisher" | "url" | "publishedAt"> & {
   type: NewsSourceType;
@@ -175,6 +175,7 @@ export function evaluateNewsBrief(brief: IncomingNewsBrief, existing = newsIntel
   if (!duplicate && !unconfirmedOnly && (brief.internalLinkOpportunities?.length || propagation.internalLinks.length)) decisions.push("ADD_INTERNAL_LINK");
   if (!duplicate && !unconfirmedOnly && (brief.seoOpportunity || brief.socialOpportunity || brief.commercialImplications?.length)) decisions.push("FLAG_OPPORTUNITY");
   if (!duplicate && !unconfirmedOnly && editorialPass && brief.standaloneArticle?.justified && (brief.importance ?? 0) >= 80 && (brief.userUsefulness ?? 0) >= 70) decisions.push("PUBLISH_STANDALONE");
+  if (!editorialPass) decisions.splice(0, decisions.length, "HOLD_EDITORIAL");
   return {
     id: brief.id ?? `${normalize(brief.headline).replaceAll(" ", "-")}-${brief.originalPublicationDate ?? brief.primarySource.publishedAt}`,
     headline: brief.headline, dateDiscovered: brief.dateDiscovered ?? brief.primarySource.publishedAt, originalPublicationDate: brief.originalPublicationDate ?? brief.primarySource.publishedAt,
@@ -190,7 +191,7 @@ export function evaluateNewsBrief(brief: IncomingNewsBrief, existing = newsIntel
     ])],
     standaloneArticle: brief.standaloneArticle ?? { justified: false, destination: affected[0] ? `/${affected[0]}` : "", reason: "No distinct standalone reader need was established." },
     freshness: brief.freshness ?? 0, importance: brief.importance ?? 0, confidence: brief.confidence ?? (brief.primarySource.type === "official" ? 100 : 70), userUsefulness: brief.userUsefulness ?? 0, decisions: [...new Set(decisions)],
-    publicSummary: duplicate ? "" : brief.publicSummary ?? "", comparison: duplicate ? { kind: "duplicate" } : brief.comparison,
+    publicSummary: duplicate || !editorialPass ? "" : brief.publicSummary ?? "", comparison: duplicate ? { kind: "duplicate" } : brief.comparison,
   };
 }
 
