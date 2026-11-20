@@ -17,7 +17,9 @@ for tool in git tar flock curl; do command -v "$tool" >/dev/null || { echo "Miss
   echo "Check application root, source checkout and cPanel Node 22 activation path." >&2; exit 78;
 }
 # shellcheck disable=SC1090
+set +u
 source "$ACTIVATE"
+set -u
 node -e 'const [major,minor]=process.versions.node.split(".").map(Number); if(major!==22 || minor<13) process.exit(1)'
 export NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 unset SITES_TRUST_AUTH_HEADERS PORT HOST || true
@@ -37,9 +39,9 @@ if [[ "$mode" == prepare || "$mode" == deploy ]]; then
   (
     cd "$release"
     # Isolated dependencies: never replace the live app's node_modules or .next.
-    npm ci --include=dev --no-audit --no-fund
-    npm ls --omit=dev --depth=0
-    npm run verify
+    npm --prefix "$release" ci --include=dev --no-audit --no-fund
+    npm --prefix "$release" ls --omit=dev --depth=0
+    npm --prefix "$release" run audit:dependencies && npm --prefix "$release" run lint && npm --prefix "$release" run audit:editorial && npm --prefix "$release" run build -- --webpack && npm --prefix "$release" run typecheck && npm --prefix "$release" test && npm --prefix "$release" run audit:deployment
   )
   printf '%s\n' "$revision" > "$release/.verified"
   printf '%s\n' "$release" > "$STATE/candidates/$revision.tmp"
